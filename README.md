@@ -121,3 +121,11 @@ Make sure your Google Form includes the following fields to ensure compatibility
 | Incident Detail | Paragraph |
 
 ---
+
+## Author
+
+**Hidayatul Hayat**
+
+- [LinkedIn](https://www.linkedin.com/in/hidayatul-hayat-s-kom-441b6b278)
+- [Portfolio](https://portfolio-backend-frontend-murex.vercel.app/)
+
