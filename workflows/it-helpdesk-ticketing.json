@@ -1,0 +1,169 @@
+{
+  "name": "Automated IT Helpdesk & Ticketing System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1wPBw2AObSTKapbajrM-wgNuWjv7LwERCf2ZZGTYOvJE/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1694074765,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wPBw2AObSTKapbajrM-wgNuWjv7LwERCf2ZZGTYOvJE/edit#gid=1694074765"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b1a3ed02-6fab-4690-8a49-7ba688096dd4",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "AgxdINjhTNlASXCx",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "10003",
+          "mode": "list",
+          "cachedResultName": "IT Support Desk"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "10022",
+          "mode": "list",
+          "cachedResultName": "Bug"
+        },
+        "summary": "=[{{ $json['Department'] }}] {{ $json['Incident Title'] }}",
+        "additionalFields": {
+          "description": "=Reporter: {{ $json.Name }} ({{ $json.Email }})\nDepartment: {{ $json.Department }}\nReporter's Priority: {{ $json.Priority }}\n\nIssue Details:\n{{ $json['Incident Detail'] }}Reporter: {{ $json.Name }} ({{ $json.Email }})"
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3449878e-4c73-4914-be40-7d203e095053",
+      "name": "Create an issue",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "vOhDCl7jxV2aRhKk",
+          "name": "Jira SW Cloud account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Trigger').item.json.Email }}",
+        "subject": "=[Ticket Received - #{{ $('Create an issue').item.json.key }}] {{ $('Google Sheets Trigger').item.json['Incident Title'] }}",
+        "emailType": "text",
+        "message": "=Hello {{ $('Google Sheets Trigger').item.json.Name }},  We have received your incident/issue report; your ticket number is: #{{ $('Create an issue').item.json.key }}.  The IT Support team will review and address your issue based on the current queue and the reported priority level.  Please do not submit a new report for the same issue.  Regards, IT Support Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "062a587b-d3e9-46b3-889a-2de67fbc235e",
+      "name": "Send a message",
+      "webhookId": "21b2284a-9399-4288-8e8e-11a9b6888be4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "keoHOB5n6CbEWq1Z",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/REPLACE_WITH_YOUR_NEW_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"embeds\": [\n    {\n      \"title\": \"🚨 NEW IT HELPDESK TICKET!\",\n      \"color\": 15158332,\n      \"fields\": [\n        {\n          \"name\": \"🎫 Ticket ID\",\n          \"value\": \"#{{ $json.key }}\",\n          \"inline\": true\n        },\n        {\n          \"name\": \"👤 Submitted By\",\n          \"value\": \"{{ $('Google Sheets Trigger').item.json.Name }}\",\n          \"inline\": true\n        },\n        {\n          \"name\": \"🏢 Department\",\n          \"value\": \"{{ $('Google Sheets Trigger').item.json.Department }}\",\n          \"inline\": true\n        },\n        {\n          \"name\": \"⚡ Priority\",\n          \"value\": \"{{ $('Google Sheets Trigger').item.json.Priority }}\",\n          \"inline\": true\n        },\n        {\n          \"name\": \"📝 Issue\",\n          \"value\": \"{{ $('Google Sheets Trigger').item.json['Incident Title'] }}\",\n          \"inline\": false\n        }\n      ],\n      \"footer\": {\n        \"text\": \"IT Helpdesk Notification System\"\n      },\n      \"timestamp\": \"{{ $now.toISO() }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "e748a605-5861-4ef0-b816-3bc20611c62e",
+      "name": "Discord Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an issue": {
+      "main": [
+        [
+          {
+            "node": "Discord Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1d9da3a8-a722-43b2-84f7-ccc131fd4fa8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "49b5e6f56ea0a4c833393c1ca893dd3485308e5251b2817539ae0fe20cdba4b2"
+  },
+  "nodeGroups": [],
+  "id": "qgsQ8B5UQ1OKXDKr",
+  "tags": []
+}
